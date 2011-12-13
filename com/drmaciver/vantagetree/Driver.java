@@ -15,6 +15,7 @@ class Driver{
 
 		VantageTree<double[]> db = new VantageTree<double[]>(Metric.L2_DISTANCE, points);
 
+    db.debugStatistics = true;
 
 		for(int i = 0; i < 100; i++){
 			double[] p = rv(rnd);
