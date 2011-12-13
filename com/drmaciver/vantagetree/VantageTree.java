@@ -12,8 +12,10 @@ import java.util.Arrays;
 
 class VantageTree<V>{
 	public static final int MAXIMUM_LEAF_SIZE = 10;
+  public static final int ITERATIONS_FOR_CANDIDATE_SEARCH = 50;
+  public static final int SAMPLE_SIZE_FOR_CANDIDATE_SEARCH = 100;
 
-	public boolean debugStatistics = false;
+	public boolean debugStatistics(){ return false; }
 
 	final Metric<V> metric;
 	final Random random;
@@ -30,7 +32,7 @@ class VantageTree<V>{
 	public Collection<V> allWithinEpsilon(V v, double e){
 		leavesHit = 0;
 		Collection<V> result = this.tree.allWithinEpsilon(v, e);
-		if(debugStatistics) System.err.println("allWithinEpsilon hit " + leavesHit  + " leaves out of " + leafCount);
+		if(debugStatistics()) System.err.println("allWithinEpsilon hit " + leavesHit  + " leaves out of " + leafCount);
 		return result;
 	}
 
@@ -38,14 +40,45 @@ class VantageTree<V>{
 		NNQueue q = new NNQueue(n);
 		leavesHit = 0;
 		tree.addToQueue(v, q);
-		if(debugStatistics) System.err.println("nearestN hit " + leavesHit  + " leaves out of " + leafCount);
+		if(debugStatistics()) System.err.println("nearestN hit " + leavesHit  + " leaves out of " + leafCount);
 		return q.toList();
 	}
+
+  V pickAPivot(List<V> items){
+    List<V> sample = new ArrayList<V>();
+    for(int run = 0; run < SAMPLE_SIZE_FOR_CANDIDATE_SEARCH; run++) sample.add(items.get(random.nextInt(items.size())));
+
+
+    V bestCenter = null;
+    double bestSpread = 0;
+
+    for(int run = 0; run < ITERATIONS_FOR_CANDIDATE_SEARCH; run++){
+      V candidate = items.get(random.nextInt(items.size()));
+			double[] distances = new double[sample.size()];
+			int i = 0;
+			for(V v : sample) distances[i++] = metric.distance(v, candidate);
+      Arrays.sort(distances);
+      double median = distances[distances.length / 2];
+      
+      double spread = 0;
+
+      for(double d : distances) spread += Math.pow(d - median, 2);
+
+      if(spread > bestSpread){
+        bestCenter = candidate;
+        bestSpread = spread;
+        if(debugStatistics()) System.err.println("Found a good candidate on iteration " + run);
+             
+      }
+    }
+      
+    return bestCenter;
+  }
 
 	Tree buildTree(List<V> items){
 		if(items.size() <= MAXIMUM_LEAF_SIZE) return new Leaf(items);
 		else {
-			V pivot = items.get(random.nextInt(items.size()));
+			V pivot = pickAPivot(items);
 			double[] distances = new double[items.size()];
 			int i = 0;
 			for(V v : items) distances[i++] = metric.distance(v, pivot);
