@@ -21,11 +21,14 @@ class Driver{
 			double e = rnd.nextDouble();
 
 			System.out.println("Found " + db.allWithinEpsilon(p, e).size() + " points within " + e + " of " + Arrays.toString(p));
+			System.out.print("Nearest 3 points are " );
+			for(double[] xs : db.nearestN(p, 3)) System.out.print(Arrays.toString(xs) + "  ");
+			System.out.println();
 		}
 	}
 
 	public static double[] rv(Random rnd){
-		double[] x = new double[10];
+		double[] x = new double[2];
 		for(int i = 0; i < x.length; i++) x[i] = rnd.nextDouble();
 		return x;
 	}

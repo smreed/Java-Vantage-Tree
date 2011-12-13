@@ -30,8 +30,16 @@ class VantageTree<V>{
 	public Collection<V> allWithinEpsilon(V v, double e){
 		leavesHit = 0;
 		Collection<V> result = this.tree.allWithinEpsilon(v, e);
-		if(debugStatistics) System.err.println("Hit " + leavesHit  + " leaves out of " + leafCount);
+		if(debugStatistics) System.err.println("allWithinEpsilon hit " + leavesHit  + " leaves out of " + leafCount);
 		return result;
+	}
+
+	public List<V> nearestN(V v, int n){
+		NNQueue q = new NNQueue(n);
+		leavesHit = 0;
+		tree.addToQueue(v, q);
+		if(debugStatistics) System.err.println("nearestN hit " + leavesHit  + " leaves out of " + leafCount);
+		return q.toList();
 	}
 
 	Tree buildTree(List<V> items){
@@ -61,6 +69,7 @@ class VantageTree<V>{
 
 	private abstract class Tree extends AbstractCollection<V>{
 		abstract Collection<V> allWithinEpsilon(V v, double e);
+		abstract void addToQueue(V v, NNQueue q);
 	}
 
 	private class Leaf extends Tree{
@@ -82,6 +91,14 @@ class VantageTree<V>{
 				if(metric.distance(v, w) < e) result.add(w);
 			}
 			return result;
+		}
+
+		void addToQueue(V v, NNQueue q){
+			leavesHit++;
+
+			for(V w: this.items){
+				q.add(w, metric.distance(v, w));
+			}
 		}
 	}
 
@@ -115,6 +132,15 @@ class VantageTree<V>{
 			if(metric.bound(e, r) < this.threshold) return in.allWithinEpsilon(v, e);
 			return concat(in.allWithinEpsilon(v, e), out.allWithinEpsilon(v, e));
 		}
+
+		void addToQueue(V v, NNQueue q){
+			double r = metric.distance(v, center);
+
+			if(metric.bound(q.bound(), this.radius) < r) return;
+			if(metric.bound(q.bound(), this.threshold) < r){ out.addToQueue(v, q); }
+			else if(metric.bound(q.bound(), r) < this.threshold){ in.addToQueue(v, q); }
+			else { in.addToQueue(v, q); out.addToQueue(v, q); };
+		}
 	}
 
 	private Collection<V> concat(final Collection<V> x, final Collection<V> y){
@@ -139,5 +165,39 @@ class VantageTree<V>{
 		public boolean hasNext(){ return left.hasNext() || left.hasNext(); }
 		public V next(){ return left.hasNext() ? left.next() : right.next(); }
 		public void remove(){ throw new UnsupportedOperationException(); }
+	}
+
+	static class PWD implements Comparable<PWD>{
+		final Object v;
+		final double d;
+
+		PWD(Object v, double d){ this.v = v; this.d = d; }
+
+		public int compareTo(PWD that){ return Double.compare(this.d, that.d); }
+	}
+
+	class NNQueue{
+		private final PWD[] elements;
+		private int size = 0;
+
+		NNQueue(int n){ this.elements = new PWD[n]; }
+
+		double bound(){ return size < elements.length ? Double.POSITIVE_INFINITY: elements[size - 1].d; }
+
+		PWD last(){ return elements[elements.length - 1]; }
+		void add(V v, double d){
+			if(d > bound()) return;
+
+			if(size < elements.length) elements[size++] = new PWD(v, d);
+			else elements[elements.length - 1] = new PWD(v, d);
+	
+			if(size == elements.length) Arrays.sort(elements);	
+		}
+
+		List<V> toList(){
+			List<V> r = new ArrayList<V>();
+			for(PWD pwd : elements) if(pwd != null) r.add((V)pwd.v);
+			return r;
+		}
 	}
 }
