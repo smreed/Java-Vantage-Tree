@@ -95,6 +95,13 @@ class VantageTree<V>{
 			double median = distances[distances.length / 2];
 			double max = distances[distances.length - 1];
 
+      if(max <= 0.0 || median >= max){
+        // TODO: Optimise this case more sensibly. 
+        treeBuilt += items.size();
+        debugBuilding();
+        return new Leaf(items);
+      }
+
 			List<V> in = new ArrayList<V>();	
 			List<V> out = new ArrayList<V>();	
 
