@@ -22,10 +22,13 @@ class VantageTree<V>{
 	final Tree tree;
 	int leafCount = 0;
 	int leavesHit = 0;
+  int treeBuilt = 0;
+  final int totalSize;
 
 	public VantageTree(Metric<V> metric, List<V> items){
 		this.metric = metric;
 		this.random = new Random();
+    this.totalSize = items.size();
 		this.tree 	= buildTree(items); 
 	}
 
@@ -67,16 +70,22 @@ class VantageTree<V>{
       if(spread > bestSpread){
         bestCenter = candidate;
         bestSpread = spread;
-        if(debugStatistics()) System.err.println("Found a good candidate on iteration " + run);
-             
       }
     }
       
     return bestCenter;
   }
 
+  void debugBuilding(){
+    if(debugStatistics() && (random.nextInt(1000) == 0)) System.err.println("Tree building " + (treeBuilt * 100.0 / totalSize) + "% complete");
+  }
+
 	Tree buildTree(List<V> items){
-		if(items.size() <= MAXIMUM_LEAF_SIZE) return new Leaf(items);
+		if(items.size() <= MAXIMUM_LEAF_SIZE) {
+      treeBuilt += items.size();
+      debugBuilding();
+      return new Leaf(items);
+    }
 		else {
 			V pivot = pickAPivot(items);
 			double[] distances = new double[items.size()];
@@ -96,7 +105,9 @@ class VantageTree<V>{
 
 			assert(in.size() + out.size() == items.size());
 
-			return new Split(pivot, median, max, in, out);
+			Tree result = new Split(pivot, median, max, in, out);
+      debugBuilding(); 
+      return result;
 		}
 	}
 

@@ -10,13 +10,17 @@ class Driver{
 		List<double[]> points = new ArrayList<double[]>();
 		Random rnd = new Random();
 
-		for(int i = 0; i < 10000; i++){
+		for(int i = 0; i < 100000; i++){
 			points.add(rv(rnd));
 		}
 
+    long buildStart = System.currentTimeMillis();
 		VantageTree<double[]> db = new VantageTree<double[]>(Metric.L2_DISTANCE, points){ public boolean debugStatistics(){ return true; } };
+    System.out.println("Building tree took " + (System.currentTimeMillis() - buildStart) + "ms");
 
-		for(int i = 0; i < 100; i++){
+    int numQueries = 10000;
+    long queryStart = System.currentTimeMillis();
+		for(int i = 0; i < numQueries; i++){
 			double[] p = rv(rnd);
 			double e = rnd.nextDouble();
 
@@ -27,6 +31,8 @@ class Driver{
 			for(double[] xs : n3) System.out.print(Arrays.toString(xs) + "  ");
 			System.out.println();
 		}
+    long queriesTook = System.currentTimeMillis() - queryStart;
+    System.out.println("Queries took about " + (queriesTook / ((double)numQueries)) + "ms each");
 	}
 
 	public static double[] rv(Random rnd){
