@@ -1,4 +1,4 @@
-SOURCE=$(wildcard com/drmaciver/vantagetree/*java)
+SOURCE=$(wildcard com/drmaciver/*java)
 CLASSES=$(SOURCE:.java=.class)
 
 all: $(CLASSES)

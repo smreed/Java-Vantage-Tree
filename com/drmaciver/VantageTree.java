@@ -1,4 +1,4 @@
-package com.drmaciver.vantagetree;
+package com.drmaciver;
 
 import java.lang.Iterable;
 import java.util.Iterator;

@@ -1,4 +1,4 @@
-package com.drmaciver.vantagetree;
+package com.drmaciver;
 import java.util.List;
 import java.util.Collection;
 import java.util.Random;
