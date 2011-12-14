@@ -40,7 +40,7 @@ class VantageTree<V>{
 	}
 
 	public List<V> nearestN(V v, int n){
-		NNQueue q = new NNQueue(n);
+		SmallestElements<V> q = new SmallestElements<V>(n);
 		leavesHit = 0;
 		tree.addToQueue(v, q);
 		if(debugStatistics()) System.err.println("nearestN hit " + leavesHit  + " leaves out of " + leafCount);
@@ -120,7 +120,7 @@ class VantageTree<V>{
 
 	private abstract class Tree extends AbstractCollection<V>{
 		abstract Collection<V> allWithinEpsilon(V v, double e);
-		abstract void addToQueue(V v, NNQueue q);
+		abstract void addToQueue(V v, SmallestElements<V> q);
 	}
 
 	private class Leaf extends Tree{
@@ -144,7 +144,7 @@ class VantageTree<V>{
 			return result;
 		}
 
-		void addToQueue(V v, NNQueue q){
+		void addToQueue(V v, SmallestElements<V> q){
 			leavesHit++;
 
 			for(V w: this.items){
@@ -184,7 +184,7 @@ class VantageTree<V>{
 			return concat(in.allWithinEpsilon(v, e), out.allWithinEpsilon(v, e));
 		}
 
-		void addToQueue(V v, NNQueue q){
+		void addToQueue(V v, SmallestElements<V> q){
 			double r = metric.distance(v, center);
 
 			if(metric.bound(q.bound(), this.radius) < r) return;
@@ -216,39 +216,5 @@ class VantageTree<V>{
 		public boolean hasNext(){ return left.hasNext() || left.hasNext(); }
 		public V next(){ return left.hasNext() ? left.next() : right.next(); }
 		public void remove(){ throw new UnsupportedOperationException(); }
-	}
-
-	static class PWD implements Comparable<PWD>{
-		final Object v;
-		final double d;
-
-		PWD(Object v, double d){ this.v = v; this.d = d; }
-
-		public int compareTo(PWD that){ return Double.compare(this.d, that.d); }
-	}
-
-	class NNQueue{
-		private final PWD[] elements;
-		private int size = 0;
-
-		NNQueue(int n){ this.elements = new PWD[n]; }
-
-		double bound(){ return size < elements.length ? Double.POSITIVE_INFINITY: elements[size - 1].d; }
-
-		PWD last(){ return elements[elements.length - 1]; }
-		void add(V v, double d){
-			if(d > bound()) return;
-
-			if(size < elements.length) elements[size++] = new PWD(v, d);
-			else elements[elements.length - 1] = new PWD(v, d);
-	
-			if(size == elements.length) Arrays.sort(elements);	
-		}
-
-		List<V> toList(){
-			List<V> r = new ArrayList<V>();
-			for(PWD pwd : elements) if(pwd != null) r.add((V)pwd.v);
-			return r;
-		}
 	}
 }
