@@ -2,7 +2,7 @@ package com.drmaciver;
 
 import java.lang.Math;
 
-abstract class Metric<V>{
+public abstract class Metric<V>{
   public static final Metric<Double> DOUBLE_DISTANCE = new Metric<Double>(){
     public double distance(Double x, Double y){ return Math.abs(x - y); }
   };
