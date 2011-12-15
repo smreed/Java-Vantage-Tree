@@ -50,16 +50,8 @@ class VantageTree<V> extends AbstractCollection<V>{
 		return q.toList();
 	}
 
-  V pickAPivot(List<V> items){
-    List<V> sample = new ArrayList<V>();
-    for(int run = 0; run < SAMPLE_SIZE_FOR_CANDIDATE_SEARCH; run++) sample.add(items.get(random.nextInt(items.size())));
-
-
-    V bestCenter = null;
-    double bestSpread = 0;
-
-    for(int run = 0; run < ITERATIONS_FOR_CANDIDATE_SEARCH; run++){
-      V candidate = items.get(random.nextInt(items.size()));
+  final RecursiveSampler<V> spreadBetter = new RecursiveSampler<V>(){
+    public double score(V candidate, List<V> sample){
 			double[] distances = new double[sample.size()];
 			int i = 0;
 			for(V v : sample) distances[i++] = metric.distance(v, candidate);
@@ -67,20 +59,17 @@ class VantageTree<V> extends AbstractCollection<V>{
       double median = distances[distances.length / 2];
       
       double spread = 0;
-
       for(double d : distances) spread += Math.pow(d - median, 2);
-
-      if(spread > bestSpread){
-        bestCenter = candidate;
-        bestSpread = spread;
-      }
+      return -spread; 
     }
-      
-    return bestCenter;
+  };
+
+  V pickAPivot(List<V> items){
+    return spreadBetter.pickBestCandidate(items);
   }
 
   void debugBuilding(){
-    if(debugStatistics() && (random.nextInt(1000) == 0)) System.err.println("Tree building " + (treeBuilt * 100.0 / totalSize) + "% complete");
+    if(debugStatistics() && (random.nextInt(totalSize / 100) == 0)) System.err.println("Tree building " + (treeBuilt * 100.0 / totalSize) + "% complete");
   }
 
 	Tree buildTree(List<V> items){
