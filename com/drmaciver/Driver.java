@@ -15,24 +15,34 @@ class Driver{
 		}
 
     long buildStart = System.currentTimeMillis();
-		VantageTree<double[]> db = new VantageTree<double[]>(Metric.L2_DISTANCE, points){ public boolean debugStatistics(){ return true; } };
+		VantageTree<double[]> db = new VantageTree<double[]>(Metric.L2_DISTANCE, points);
     System.out.println("Building tree took " + (System.currentTimeMillis() - buildStart) + "ms");
 
-    int numQueries = 10000;
-    long queryStart = System.currentTimeMillis();
-		for(int i = 0; i < numQueries; i++){
-			double[] p = rv(rnd);
-			double e = rnd.nextDouble();
+    {
+      int numQueries = 10000;
+      long queryStart = System.currentTimeMillis();
+      for(int i = 0; i < numQueries; i++){
+        double[] p = rv(rnd);
+        double e = rnd.nextDouble();
 
-      Collection<double[]> we = db.allWithinEpsilon(p, e);
-      Collection<double[]> n3 = db.nearestN(p, 3);
-			System.out.println("Found " + we.size() + " points within " + e + " of " + Arrays.toString(p));
-			System.out.print("Nearest 3 points are " );
-			for(double[] xs : n3) System.out.print(Arrays.toString(xs) + "  ");
-			System.out.println();
-		}
-    long queriesTook = System.currentTimeMillis() - queryStart;
-    System.out.println("Queries took about " + (queriesTook / ((double)numQueries)) + "ms each");
+        Collection<double[]> we = db.allWithinEpsilon(p, e);
+      }
+      long queriesTook = System.currentTimeMillis() - queryStart;
+      System.out.println("Within epsilon queries took about " + (queriesTook / ((double)numQueries)) + "ms each");
+    }
+
+    {
+      int numQueries = 10000;
+      long queryStart = System.currentTimeMillis();
+      for(int i = 0; i < numQueries; i++){
+        double[] p = rv(rnd);
+        double e = rnd.nextDouble();
+
+        Collection<double[]> n3 = db.nearestN(p, 3);
+      }
+      long queriesTook = System.currentTimeMillis() - queryStart;
+      System.out.println("Nearest neighbour queries took about " + (queriesTook / ((double)numQueries)) + "ms each");
+    }
 	}
 
 	public static double[] rv(Random rnd){
