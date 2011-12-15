@@ -33,9 +33,9 @@ class SmallestElements<V>{
   @SuppressWarnings("unchecked")
   public List<V> toList(){
     EWS[] h = heap.clone();
-    Arrays.sort(h);
+    Arrays.sort(h, 0, fill);
     List<V> l = new ArrayList<V>(h.length);
-    for(EWS e : h) l.add((V)e.element);
+    for(EWS e : h) if(e != null)l.add((V)e.element);
     return l;
   }
 

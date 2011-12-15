@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.Arrays;
 
-class VantageTree<V>{
+class VantageTree<V> extends AbstractCollection<V>{
 	public static final int MAXIMUM_LEAF_SIZE = 10;
   public static final int ITERATIONS_FOR_CANDIDATE_SEARCH = 50;
   public static final int SAMPLE_SIZE_FOR_CANDIDATE_SEARCH = 100;
@@ -31,6 +31,9 @@ class VantageTree<V>{
     this.totalSize = items.size();
 		this.tree 	= buildTree(items); 
 	}
+
+  public Iterator<V> iterator(){ return tree.iterator(); }
+  public int size(){ return tree.size(); }
 
 	public Collection<V> allWithinEpsilon(V v, double e){
 		leavesHit = 0;
