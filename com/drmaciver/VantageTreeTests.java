@@ -33,6 +33,7 @@ class VantageTreeTests{
       this.tree = new VantageTree<V>(metric, points);
       testCases.add(this);
       check(points.size() == tree.size(), "Expected tree to have " + points.size() + " points but it has " + tree.size());
+      check(points.size() == tree.toList().size(), "Expected tree.toList() to have " + points.size() + " points but it has " + tree.toList().size());
 
       for(int i = 1; i < 5; i++){
         for(int j = 0; j < 50; j++){
