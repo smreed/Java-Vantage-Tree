@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.Arrays;
 
-class VantageTree<V> extends AbstractCollection<V>{
+class VantageTree<V> extends AbstractCollection<V> implements MetricSearchTree<V>{
   public static final int MAXIMUM_LEAF_SIZE = 10;
   public static final int ITERATIONS_FOR_CANDIDATE_SEARCH = 50;
   public static final int SAMPLE_SIZE_FOR_CANDIDATE_SEARCH = 100;
@@ -35,19 +35,15 @@ class VantageTree<V> extends AbstractCollection<V>{
   public Iterator<V> iterator(){ return tree.iterator(); }
   public int size(){ return tree.size(); }
 
-  public Collection<V> allWithinEpsilon(V v, double e){
+  public MetricSearchTree<V> allWithinEpsilon(V v, double e){
   	leavesHit = 0;
-  	Collection<V> result = this.tree.allWithinEpsilon(v, e);
+  	Tree result = this.tree.allWithinEpsilon(v, e);
   	if(debugStatistics()) System.err.println("allWithinEpsilon hit " + leavesHit  + " leaves out of " + leafCount);
   	return result;
   }
 
   public List<V> nearestN(V v, int n){
-  	SmallestElements<V> q = new SmallestElements<V>(n);
-  	leavesHit = 0;
-  	tree.addToQueue(v, q);
-  	if(debugStatistics()) System.err.println("nearestN hit " + leavesHit  + " leaves out of " + leafCount);
-  	return q.toList();
+    return this.tree.nearestN(v, n);
   }
 
   final RecursiveSampler<V> spreadBetter = new RecursiveSampler<V>(){
@@ -110,9 +106,17 @@ class VantageTree<V> extends AbstractCollection<V>{
   	}
   }
 
-  private abstract class Tree extends AbstractCollection<V>{
-  	abstract Collection<V> allWithinEpsilon(V v, double e);
+  private abstract class Tree extends AbstractCollection<V> implements MetricSearchTree<V>{
+    abstract public Tree allWithinEpsilon(V v, double e);
+
   	abstract void addToQueue(V v, SmallestElements<V> q);
+    public List<V> nearestN(V v, int n){
+      SmallestElements<V> q = new SmallestElements<V>(n);
+      leavesHit = 0;
+      addToQueue(v, q);
+      if(debugStatistics()) System.err.println("nearestN hit " + leavesHit  + " leaves out of " + leafCount);
+      return q.toList();
+    }
   }
 
   private class Leaf extends Tree{
@@ -126,14 +130,14 @@ class VantageTree<V> extends AbstractCollection<V>{
   	public int size(){ return items.size(); }
   	public Iterator<V> iterator(){ return items.iterator(); }	
 
-  	Collection<V> allWithinEpsilon(V v, double e){
+  	public Tree allWithinEpsilon(V v, double e){
   		leavesHit++;
   		List<V> result = new ArrayList<V>();
 
   		for(V w: this.items){
   			if(metric.distance(v, w) < e) result.add(w);
   		}
-  		return result;
+  		return new Leaf(result);
   	}
 
   	void addToQueue(V v, SmallestElements<V> q){
@@ -153,27 +157,38 @@ class VantageTree<V> extends AbstractCollection<V>{
   	private final Tree out;
   	private final int size;
 
-  	Split(V center, double threshold, double bound, List<V> in, List<V> out){
+  	Split(V center, double threshold, double bound, Tree in, Tree out){
   		this.center = center;
   		this.threshold = threshold;
   		this.radius = bound;
-  		this.in = buildTree(in);
-  		this.out = buildTree(out);
+  		this.in = in;
+  		this.out = out;
   		this.size = this.in.size() + this.out.size();
+  	}
+
+  	Split(V center, double threshold, double bound, List<V> in, List<V> out){
+      this(center, threshold, bound, buildTree(in), buildTree(out));
   	}
 
   	public int size(){ return size; }
 
   	public Iterator<V> iterator(){ return new ChainedIterator<V>(in.iterator(), out.iterator()); }
 
-  	Collection<V> allWithinEpsilon(V v, double e){
+  	public Tree allWithinEpsilon(V v, double e){
   		double r = metric.distance(v, center);
 
   		if(metric.bound(r, this.radius) < e) return this;
-  		if(metric.bound(e, this.radius) < r) return Collections.emptyList();
+  		if(metric.bound(e, this.radius) < r) return new Leaf(Collections.<V>emptyList());
   		if(metric.bound(e, this.threshold) < r) return out.allWithinEpsilon(v, e);
   		if(metric.bound(e, r) < this.threshold) return in.allWithinEpsilon(v, e);
-  		return concat(in.allWithinEpsilon(v, e), out.allWithinEpsilon(v, e));
+
+      Tree newIn = in.allWithinEpsilon(v, e);
+      Tree newOut = out.allWithinEpsilon(v, e);
+
+      if(newIn.isEmpty()) return newOut;
+      if(newOut.isEmpty()) return newIn;
+
+  		return new Split(center, threshold, radius, newIn, newOut);
   	}
 
   	void addToQueue(V v, SmallestElements<V> q){
