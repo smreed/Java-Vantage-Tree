@@ -6,16 +6,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 class Driver{
-	public static void main(String[] args){
-		List<double[]> points = new ArrayList<double[]>();
-		Random rnd = new Random();
+  public static void main(String[] args){
+  	List<double[]> points = new ArrayList<double[]>();
+  	Random rnd = new Random();
 
-		for(int i = 0; i < 1000000; i++){
-			points.add(rv(rnd));
-		}
+  	for(int i = 0; i < 1000000; i++){
+  		points.add(rv(rnd));
+  	}
 
     long buildStart = System.currentTimeMillis();
-		VantageTree<double[]> db = new VantageTree<double[]>(Metric.L2_DISTANCE, points);
+  	VantageTree<double[]> db = new VantageTree<double[]>(Metric.L2_DISTANCE, points);
     System.out.println("Building tree took " + (System.currentTimeMillis() - buildStart) + "ms");
 
     {
@@ -43,11 +43,11 @@ class Driver{
       long queriesTook = System.currentTimeMillis() - queryStart;
       System.out.println("Nearest neighbour queries took about " + (queriesTook / ((double)numQueries)) + "ms each");
     }
-	}
+  }
 
-	public static double[] rv(Random rnd){
-		double[] x = new double[2];
-		for(int i = 0; i < x.length; i++) x[i] = rnd.nextDouble();
-		return x;
-	}
+  public static double[] rv(Random rnd){
+  	double[] x = new double[2];
+  	for(int i = 0; i < x.length; i++) x[i] = rnd.nextDouble();
+  	return x;
+  }
 }
