@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.Arrays;
 
-public class VantageTree<V> extends AbstractCollection<V> implements MetricSearchTree<V>{
+public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   public static final int MAXIMUM_LEAF_SIZE = 10;
   public static final int ITERATIONS_FOR_CANDIDATE_SEARCH = 50;
   public static final int SAMPLE_SIZE_FOR_CANDIDATE_SEARCH = 100;
@@ -114,7 +114,7 @@ public class VantageTree<V> extends AbstractCollection<V> implements MetricSearc
   	}
   }
 
-  private abstract class Tree extends AbstractCollection<V> implements MetricSearchTree<V>{
+  private abstract class Tree extends AbstractMetricSearchTree<V>{
     abstract public Tree allWithinEpsilon(V v, double e);
 
   	abstract void addToQueue(V v, SmallestElements<V> q);
