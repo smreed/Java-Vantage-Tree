@@ -37,6 +37,7 @@ class VantageTreeTests{
       for(int i = 1; i < 5; i++){
         for(int j = 0; j < 50; j++){
           sampleNearest(i);
+          testNearest(this.points.get(random.nextInt(points.size())), i);
         }
       }
     }
@@ -46,6 +47,18 @@ class VantageTreeTests{
       V nearest = tree.nearestN(sample, n).iterator().next();
 
       check(nearest.equals(sample), "Expected the first of the nearest " + n + " points to " + sample + " to be itself but it was " + nearest);
+    }
+
+    void testNearest(V v, int n){
+      List<V> nearest = tree.nearestN(v, n);
+
+      for(V w : nearest){
+        for(V w2 : points){
+          if(!nearest.contains(w2)){
+            check(metric.distance(v, w) <= metric.distance(v, w2), "The element " + w2 + " is closer to " + v + " than " + w + " is, but the latter is supposed to be one of its " + n + " nearest neighours");
+          }
+        }
+      }
     }
 
     void check(boolean value, String message){
