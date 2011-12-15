@@ -228,7 +228,7 @@ public class VantageTree<V> extends AbstractCollection<V> implements MetricSearc
   		this.right = right;
   	}
 
-  	public boolean hasNext(){ return left.hasNext() || left.hasNext(); }
+  	public boolean hasNext(){ return left.hasNext() || right.hasNext(); }
   	public V next(){ return left.hasNext() ? left.next() : right.next(); }
   	public void remove(){ throw new UnsupportedOperationException(); }
   }
