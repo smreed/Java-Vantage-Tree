@@ -65,7 +65,7 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   }
 
   void debugBuilding(){
-    if(debugStatistics() && (random.nextInt(totalSize / 100) == 0)) System.err.println("Tree building " + (treeBuilt * 100.0 / totalSize) + "% complete");
+    if(debugStatistics() && (random.nextInt(1 + totalSize / 100) == 0)) System.err.println("Tree building " + (treeBuilt * 100.0 / totalSize) + "% complete");
   }
 
   Tree buildTree(List<V> items){
