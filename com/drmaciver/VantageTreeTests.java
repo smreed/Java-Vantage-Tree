@@ -66,14 +66,23 @@ class VantageTreeTests{
     }
   }
 
+  public static final int MAX_ERRORS = 5;
+
   void run(){
     boolean failed = false;
     for(TestCase<?> tc : testCases){
       if(!tc.errors.isEmpty()){
         System.err.println(tc.name + " failed");
+       
+        int counter = 0; 
         for(String err : tc.errors){
           failed = true;
           System.err.println("  " + err);
+          counter++;
+          if(counter > MAX_ERRORS){
+            System.err.println("  Suppressed " + (tc.errors.size() - MAX_ERRORS) + " more errors");
+            break;
+          }
         }
       } else {
         System.err.println(tc.name + " ok");
