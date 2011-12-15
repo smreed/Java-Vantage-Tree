@@ -32,4 +32,13 @@ public abstract class Metric<V>{
 
   public abstract double distance(V x, V y);
   public double bound(double d1, double d2){ return d1 + d2; }
+  
+  public double radiusFrom(V center, Iterable<V> points){
+    double max = 0.0;
+    for(V v : points){
+      double d = distance(center, v);
+      if(d > max) max = d;
+    }
+    return max;
+  }
 }
