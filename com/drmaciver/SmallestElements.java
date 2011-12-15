@@ -19,13 +19,14 @@ class SmallestElements<V>{
   void add(V v, double score){
     if(score > bound()) return;
 
-    EWS ews = new EWS(); ews.element = v; ews.score = score;
 
     if(fill < heap.length){
+      EWS ews = new EWS(); ews.element = v; ews.score = score;
       heap[fill++] = ews;
       if(fill == heap.length) makeHeapFrom(0);
     } else {
-      heap[0] = ews;
+      heap[0].element = v;
+      heap[0].score = score;
       heapify(0);
     }
   }
