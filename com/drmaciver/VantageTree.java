@@ -20,6 +20,7 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   final Metric<V> metric;
   final Random random;
   final Tree tree;
+  int leavesBuilt = 0;
   int leafCount = 0;
   int leavesHit = 0;
   int treeBuilt = 0;
@@ -30,6 +31,7 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   	this.random = new Random();
     this.totalSize = items.size();
   	this.tree 	= buildTree(items); 
+    this.leafCount = leavesBuilt;
   }
 
   public Iterator<V> iterator(){ return tree.iterator(); }
@@ -127,7 +129,7 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
 
   	Leaf(List<V> items){
   		this.items = items;
-  		leafCount++;
+  		leavesBuilt++;
   	}
 
   	public int size(){ return items.size(); }

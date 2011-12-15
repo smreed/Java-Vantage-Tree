@@ -15,7 +15,7 @@ class Driver{
   	}
 
     long buildStart = System.currentTimeMillis();
-  	VantageTree<double[]> db = new VantageTree<double[]>(Metric.L2_DISTANCE, points);
+  	VantageTree<double[]> db = new VantageTree<double[]>(Metric.L2_DISTANCE, points){ public boolean debugStatistics(){ return true; } };
     System.out.println("Building tree took " + (System.currentTimeMillis() - buildStart) + "ms");
 
     {
