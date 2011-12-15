@@ -10,7 +10,7 @@ class Driver{
   	List<double[]> points = new ArrayList<double[]>();
   	Random rnd = new Random();
 
-  	for(int i = 0; i < 1000000; i++){
+  	for(int i = 0; i < 100000; i++){
   		points.add(rv(rnd));
   	}
 
@@ -32,7 +32,7 @@ class Driver{
     }
 
     {
-      int numQueries = 10000;
+      int numQueries = 100;
       long queryStart = System.currentTimeMillis();
       for(int i = 0; i < numQueries; i++){
         double[] p = rv(rnd);
@@ -42,6 +42,16 @@ class Driver{
       }
       long queriesTook = System.currentTimeMillis() - queryStart;
       System.out.println("Nearest neighbour queries took about " + (queriesTook / ((double)numQueries)) + "ms each");
+    }
+
+    {
+      int numQueries = 10000;
+      long queryStart = System.currentTimeMillis();
+      for(int i = 0; i < numQueries; i++){
+        for(Object o : db);
+      }
+      long queriesTook = System.currentTimeMillis() - queryStart;
+      System.out.println("Iterating over the whole collection took about " + (queriesTook / ((double)numQueries)) + "ms each");
     }
   }
 
