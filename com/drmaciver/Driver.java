@@ -45,7 +45,7 @@ class Driver{
     }
 
     {
-      int numQueries = 100;
+      int numQueries = 5;
       long queryStart = System.currentTimeMillis();
       for(int i = 0; i < numQueries; i++){
         for(Object o : db);

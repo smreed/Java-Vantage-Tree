@@ -35,6 +35,8 @@ public class VantageTree<V> extends AbstractCollection<V> implements MetricSearc
   public Iterator<V> iterator(){ return tree.iterator(); }
   public int size(){ return tree.size(); }
   public List<V> toList(){ return new ArrayList<V>(this); }
+
+  @SuppressWarnings("unchecked")
   public boolean contains(Object x){
     if(x == null) return false;
     // Stupid hack working around lack of <= queries
@@ -54,22 +56,20 @@ public class VantageTree<V> extends AbstractCollection<V> implements MetricSearc
     return this.tree.nearestN(v, n);
   }
 
-  final RecursiveSampler<V> spreadBetter = new RecursiveSampler<V>(){
-    public double score(V candidate, List<V> sample){
-  		double[] distances = new double[sample.size()];
-  		int i = 0;
-  		for(V v : sample) distances[i++] = metric.distance(v, candidate);
-      Arrays.sort(distances);
-      double median = distances[distances.length / 2];
-      
-      double spread = 0;
-      for(double d : distances) spread += Math.pow(d - median, 2);
-      return -spread; 
-    }
-  };
-
   V pickAPivot(List<V> items){
-    return spreadBetter.pickBestCandidate(items);
+    return (new RecursiveSampler<V>(){
+      public double score(V candidate, List<V> sample){
+        double[] distances = new double[sample.size()];
+        int i = 0;
+        for(V v : sample) distances[i++] = metric.distance(v, candidate);
+        Arrays.sort(distances);
+        double median = distances[distances.length / 2];
+        
+        double spread = 0;
+        for(double d : distances) spread += Math.pow(d - median, 2);
+        return -spread; 
+      }
+    }).pickBestCandidate(items);
   }
 
   void debugBuilding(){
