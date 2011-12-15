@@ -115,6 +115,7 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   }
 
   private abstract class Tree extends AbstractMetricSearchTree<V>{
+    abstract int depth();
     abstract public Tree allWithinEpsilon(V v, double e);
 
   	abstract void addToQueue(V v, SmallestElements<V> q);
@@ -129,6 +130,8 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
 
   private class Leaf extends Tree{
   	private final List<V> items;
+
+    int depth(){ return 0; }
 
   	Leaf(List<V> items){
   		this.items = items;
@@ -164,6 +167,13 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   	final Tree in;
   	final Tree out;
   	final int size;
+
+    int depth(){
+      int r = in.depth();
+      int j = out.depth();
+      if(j > r) r = j;
+      return r + 1;
+    }
 
   	Split(V center, double threshold, double bound, Tree in, Tree out){
   		this.center = center;
@@ -210,22 +220,25 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   }
 
   class TreeIterator implements Iterator<V>{
-    Iterator<V> currentIterator;
-    List<Tree> treesRemaining = new ArrayList<Tree>();
+    Iterator currentIterator;
+    final VantageTree.Tree[] stack;
+    int stackDepth;
 
     TreeIterator(Tree tree){
-      treesRemaining.add(tree);
+      stackDepth = 1;
+      stack = new VantageTree.Tree[tree.depth() * 2];
+      stack[0] = (VantageTree.Tree)tree;
     }
 
     void advance(){
-      while((currentIterator == null || !currentIterator.hasNext()) && !treesRemaining.isEmpty()){
-        Tree tree = treesRemaining.remove(treesRemaining.size() - 1);
+      while((currentIterator == null || !currentIterator.hasNext()) && stackDepth > 0){
+        VantageTree.Tree tree = stack[--stackDepth];
         if(tree instanceof VantageTree.Leaf){
           currentIterator = tree.iterator();
         } else {
-          Split s = (Split)tree;
-          treesRemaining.add(s.in);
-          treesRemaining.add(s.out);
+          VantageTree.Split s = (VantageTree.Split)tree;
+          stack[stackDepth++] = s.in;
+          stack[stackDepth++] = s.out;
         }
       }
     }
@@ -235,9 +248,10 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
       return currentIterator != null && currentIterator.hasNext();
     }
 
+    @SuppressWarnings("unchecked")
     public V next(){
       advance();
-      return currentIterator.next();      
+      return (V)currentIterator.next();      
     } 
 
   	public void remove(){ throw new UnsupportedOperationException(); }
