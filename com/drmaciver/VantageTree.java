@@ -34,6 +34,13 @@ public class VantageTree<V> extends AbstractCollection<V> implements MetricSearc
 
   public Iterator<V> iterator(){ return tree.iterator(); }
   public int size(){ return tree.size(); }
+  public boolean contains(Object x){
+    if(x == null) return false;
+    // Stupid hack working around lack of <= queries
+    Iterator<V> it = allWithinEpsilon((V)x, 0.001);
+    while(it.hasNext()) if(it.next().equals(x)) return true;
+    return false;
+  }
 
   public MetricSearchTree<V> allWithinEpsilon(V v, double e){
   	leavesHit = 0;

@@ -40,6 +40,8 @@ class VantageTreeTests{
           testNearest(this.points.get(random.nextInt(points.size())), i);
         }
       }
+
+      for(V v : points) check(tree.contains(v), "Expected tree to contain " + v);
     }
 
     void sampleNearest(int n){
