@@ -32,7 +32,7 @@ class Driver{
     }
 
     {
-      int numQueries = 100;
+      int numQueries = 10000;
       long queryStart = System.currentTimeMillis();
       for(int i = 0; i < numQueries; i++){
         double[] p = rv(rnd);
@@ -45,7 +45,7 @@ class Driver{
     }
 
     {
-      int numQueries = 10000;
+      int numQueries = 100;
       long queryStart = System.currentTimeMillis();
       for(int i = 0; i < numQueries; i++){
         for(Object o : db);
