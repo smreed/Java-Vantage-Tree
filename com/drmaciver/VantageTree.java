@@ -35,6 +35,8 @@ public class VantageTree<V> extends AbstractCollection<V> implements MetricSearc
   public Iterator<V> iterator(){ return tree.iterator(); }
   public int size(){ return tree.size(); }
   public List<V> toList(){ return new ArrayList<V>(this); }
+
+  @SuppressWarnings("unchecked")
   public boolean contains(Object x){
     if(x == null) return false;
     // Stupid hack working around lack of <= queries
@@ -158,12 +160,12 @@ public class VantageTree<V> extends AbstractCollection<V> implements MetricSearc
   }
 
   private class Split extends Tree{
-  	private final V center;
-  	private final double threshold;
-  	private final double radius;
-  	private final Tree in;
-  	private final Tree out;
-  	private final int size;
+  	final V center;
+  	final double threshold;
+  	final double radius;
+  	final Tree in;
+  	final Tree out;
+  	final int size;
 
   	Split(V center, double threshold, double bound, Tree in, Tree out){
   		this.center = center;
@@ -180,7 +182,7 @@ public class VantageTree<V> extends AbstractCollection<V> implements MetricSearc
 
   	public int size(){ return size; }
 
-  	public Iterator<V> iterator(){ return new ChainedIterator<V>(in.iterator(), out.iterator()); }
+  	public Iterator<V> iterator(){ return new TreeIterator(this); }
 
   	public Tree allWithinEpsilon(V v, double e){
   		double r = metric.distance(v, center);
@@ -209,27 +211,37 @@ public class VantageTree<V> extends AbstractCollection<V> implements MetricSearc
   	}
   }
 
-  private Collection<V> concat(final Collection<V> x, final Collection<V> y){
-  	if(x.isEmpty()) return y;
-  	if(y.isEmpty()) return x;
-  	else return new AbstractCollection<V>(){
-  		final int size = x.size() + y.size();
-  		public int size(){ return size; }
-  		public Iterator<V> iterator(){ return new ChainedIterator<V>(x.iterator(), y.iterator()); }
-  	};
-  }
+  class TreeIterator implements Iterator<V>{
+    Iterator<V> currentIterator;
+    List<Tree> treesRemaining = new ArrayList<Tree>();
 
-  private static class ChainedIterator<V> implements Iterator<V>{
-  	private final Iterator<V> left;
-  	private final Iterator<V> right;
+    TreeIterator(Tree tree){
+      treesRemaining.add(tree);
+    }
 
-  	ChainedIterator(Iterator<V> left, Iterator<V> right){
-  		this.left = left;
-  		this.right = right;
-  	}
+    void advance(){
+      while((currentIterator == null || !currentIterator.hasNext()) && !treesRemaining.isEmpty()){
+        Tree tree = treesRemaining.remove(treesRemaining.size() - 1);
+        if(tree instanceof VantageTree.Leaf){
+          currentIterator = tree.iterator();
+        } else {
+          Split s = (Split)tree;
+          treesRemaining.add(s.in);
+          treesRemaining.add(s.out);
+        }
+      }
+    }
 
-  	public boolean hasNext(){ return left.hasNext() || right.hasNext(); }
-  	public V next(){ return left.hasNext() ? left.next() : right.next(); }
+    public boolean hasNext(){
+      advance();
+      return currentIterator != null && currentIterator.hasNext();
+    }
+
+    public V next(){
+      advance();
+      return currentIterator.next();      
+    } 
+
   	public void remove(){ throw new UnsupportedOperationException(); }
   }
 }
