@@ -38,7 +38,7 @@ class Driver{
         double[] p = rv(rnd);
         double e = rnd.nextDouble();
 
-        Collection<double[]> n3 = db.nearestN(p, 3);
+        db.nearest(p);
       }
       long queriesTook = System.currentTimeMillis() - queryStart;
       System.out.println("Nearest neighbour queries took about " + (queriesTook / ((double)numQueries)) + "ms each");

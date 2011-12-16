@@ -2,6 +2,7 @@ package com.drmaciver;
 
 import java.lang.Iterable;
 import java.util.Iterator;
+import java.util.PriorityQueue;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.AbstractCollection;
@@ -259,4 +260,5 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
 
   	public void remove(){ throw new UnsupportedOperationException(); }
   }
+
 }
