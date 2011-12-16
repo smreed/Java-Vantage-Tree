@@ -10,7 +10,7 @@ class Driver{
   	List<double[]> points = new ArrayList<double[]>();
   	Random rnd = new Random();
 
-  	for(int i = 0; i < 100000; i++){
+  	for(int i = 0; i < 10000; i++){
   		points.add(rv(rnd));
   	}
 
@@ -19,7 +19,7 @@ class Driver{
     System.out.println("Building tree took " + (System.currentTimeMillis() - buildStart) + "ms");
 
     {
-      int numQueries = 10000;
+      int numQueries = 1000;
       long queryStart = System.currentTimeMillis();
       for(int i = 0; i < numQueries; i++){
         double[] p = rv(rnd);
@@ -32,7 +32,7 @@ class Driver{
     }
 
     {
-      int numQueries = 10000;
+      int numQueries = 1000;
       long queryStart = System.currentTimeMillis();
       for(int i = 0; i < numQueries; i++){
         double[] p = rv(rnd);
@@ -56,7 +56,7 @@ class Driver{
   }
 
   public static double[] rv(Random rnd){
-  	double[] x = new double[2];
+  	double[] x = new double[20];
   	for(int i = 0; i < x.length; i++) x[i] = rnd.nextDouble();
   	return x;
   }
