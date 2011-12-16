@@ -55,7 +55,10 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   }
 
   public List<V> nearestN(V v, int n){
-    return this.tree.nearestN(v, n);
+    leavesHit = 0;
+    List<V> result = this.tree.nearestN(v, n);
+    if(debugStatistics()) System.err.println("nearestN hit " + leavesHit  + " leaves out of " + leafCount);
+    return result;
   }
 
   V pickAPivot(List<V> items){
@@ -123,9 +126,7 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   	abstract void addToQueue(V v, SmallestElements<V> q);
     public List<V> nearestN(V v, int n){
       SmallestElements<V> q = new SmallestElements<V>(n);
-      leavesHit = 0;
       addToQueue(v, q);
-      if(debugStatistics()) System.err.println("nearestN hit " + leavesHit  + " leaves out of " + leafCount);
       return q.toList();
     }
   }
