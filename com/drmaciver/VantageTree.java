@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Arrays;
+import com.drmaciver.Repeating.RepeatingIterator;
 
 public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   public static final int MAXIMUM_LEAF_SIZE = 200;
@@ -241,23 +242,6 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
     public Iterator<V> iterator(){ return Collections.<V>emptyList().iterator(); }
   	void addToQueue(V v, SmallestElements<V> q){}
   	public Tree allWithinEpsilon(V v, double e){ return this; }
-  }
-
-  static class RepeatingIterator<T> implements Iterator<T>{
-    private final T elem;
-    private final int count;
-    private int i;
-
-    RepeatingIterator(T t, int c){
-      this.elem = t;
-      this.count = c;
-      this.i = 0;
-    }
-
-    public boolean hasNext(){ return i < count; }
-    public T next(){ i++; return elem; }
-
-  	public void remove(){ throw new UnsupportedOperationException(); }
   }
 
   class TreeIterator implements Iterator<V>{
