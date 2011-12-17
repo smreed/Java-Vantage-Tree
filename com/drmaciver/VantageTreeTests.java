@@ -1,5 +1,7 @@
 package com.drmaciver;
 
+import java.util.Set;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,6 +44,10 @@ class VantageTreeTests{
         }
       }
 
+      for(int i = 1; i < 1000; i++){
+        testEpsilon(this.points.get(random.nextInt(points.size())), random.nextDouble());
+      }
+
       for(V v : points) check(tree.contains(v), "Expected tree to contain " + v);
     }
 
@@ -62,6 +68,16 @@ class VantageTreeTests{
           }
         }
       }
+    }
+
+    void testEpsilon(V v, double e){
+      Set<V> nearest = new HashSet<V>(tree.allWithinEpsilon(v, e));
+
+      for(V pt : points){
+        if(nearest.contains(pt)) check(metric.distance(v, pt) < e, "Expected distance(" + v + ", " + pt + ") to be < " + e);
+        else check(metric.distance(v, pt) > e, "Expected distance(" + v + ", " + pt + ") to be > " + e);
+      }
+
     }
 
     void check(boolean value, String message){

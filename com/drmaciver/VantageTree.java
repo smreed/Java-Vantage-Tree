@@ -12,9 +12,7 @@ import java.util.Random;
 import java.util.Arrays;
 
 public class VantageTree<V> extends AbstractMetricSearchTree<V>{
-  public static final int MAXIMUM_LEAF_SIZE = 10;
-  public static final int ITERATIONS_FOR_CANDIDATE_SEARCH = 50;
-  public static final int SAMPLE_SIZE_FOR_CANDIDATE_SEARCH = 100;
+  public static final int MAXIMUM_LEAF_SIZE = 200;
 
   public boolean debugStatistics(){ return false; }
 
@@ -107,14 +105,17 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   		List<V> in = new ArrayList<V>();	
   		List<V> out = new ArrayList<V>();	
 
+      int c = 0;
+
   		for(V v : items){
-  			if(metric.distance(v, pivot) < median) in.add(v);
+        if(v == pivot) c++;
+        else if(metric.distance(v, pivot) < median) in.add(v);
   			else out.add(v);
   		}
 
   		assert(in.size() + out.size() == items.size());
 
-  		Tree result = new Split(pivot, median, max, in, out);
+  		Tree result = new Split(pivot, median, max, c, in, out);
       debugBuilding(); 
       return result;
   	}
@@ -170,6 +171,7 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   	final double radius;
   	final Tree in;
   	final Tree out;
+    final int count;
   	final int size;
 
     int depth(){
@@ -179,17 +181,18 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
       return r + 1;
     }
 
-  	Split(V center, double threshold, double bound, Tree in, Tree out){
+  	Split(V center, double threshold, double bound, int count, Tree in, Tree out){
   		this.center = center;
   		this.threshold = threshold;
   		this.radius = bound;
   		this.in = in;
   		this.out = out;
-  		this.size = this.in.size() + this.out.size();
+      this.count = count;
+  		this.size = this.in.size() + this.count + this.out.size();
   	}
 
-  	Split(V center, double threshold, double bound, List<V> in, List<V> out){
-      this(center, threshold, bound, buildTree(in), buildTree(out));
+  	Split(V center, double threshold, double bound, int count, List<V> in, List<V> out){
+      this(center, threshold, bound,count, buildTree(in), buildTree(out));
   	}
 
   	public int size(){ return size; }
@@ -199,28 +202,62 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   	public Tree allWithinEpsilon(V v, double e){
   		double r = metric.distance(v, center);
 
+      boolean centerHits = r < e;
+
   		if(metric.bound(r, this.radius) < e) return this;
-  		if(metric.bound(e, this.radius) < r) return new Leaf(Collections.<V>emptyList());
+  		if(metric.bound(e, this.radius) < r) return new Empty();
   		if(metric.bound(e, this.threshold) < r) return out.allWithinEpsilon(v, e);
-  		if(metric.bound(e, r) < this.threshold) return in.allWithinEpsilon(v, e);
+  		if(metric.bound(e, r) < this.threshold){
+        Tree newIn = in.allWithinEpsilon(v, e);
+        if(centerHits) new Split(center, threshold, radius, count, newIn, new Empty());
+        else return newIn;
+      }
 
       Tree newIn = in.allWithinEpsilon(v, e);
       Tree newOut = out.allWithinEpsilon(v, e);
+     
+      if(!centerHits){ 
+        if(newIn.isEmpty()) return newOut;
+        if(newOut.isEmpty()) return newIn;
+      }
 
-      if(newIn.isEmpty()) return newOut;
-      if(newOut.isEmpty()) return newIn;
-
-  		return new Split(center, threshold, radius, newIn, newOut);
+  		return new Split(center, threshold, radius, (centerHits ? count : 0), newIn, newOut);
   	}
 
   	void addToQueue(V v, SmallestElements<V> q){
   		double r = metric.distance(v, center);
 
+      for(int i = 0; i < count; i++) q.add(center, r);
   		if(metric.bound(q.bound(), this.radius) < r) return;
   		if(metric.bound(q.bound(), this.threshold) < r){ out.addToQueue(v, q); }
   		else if(metric.bound(q.bound(), r) < this.threshold){ in.addToQueue(v, q); }
   		else { in.addToQueue(v, q); out.addToQueue(v, q); };
   	}
+  }
+
+  class Empty extends Tree{
+    int depth(){ return 0; }
+    public int size(){ return 0; }
+    public Iterator<V> iterator(){ return Collections.<V>emptyList().iterator(); }
+  	void addToQueue(V v, SmallestElements<V> q){}
+  	public Tree allWithinEpsilon(V v, double e){ return this; }
+  }
+
+  static class RepeatingIterator<T> implements Iterator<T>{
+    private final T elem;
+    private final int count;
+    private int i;
+
+    RepeatingIterator(T t, int c){
+      this.elem = t;
+      this.count = c;
+      this.i = 0;
+    }
+
+    public boolean hasNext(){ return i < count; }
+    public T next(){ i++; return elem; }
+
+  	public void remove(){ throw new UnsupportedOperationException(); }
   }
 
   class TreeIterator implements Iterator<V>{
@@ -239,8 +276,9 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
         VantageTree.Tree tree = stack[--stackDepth];
         if(tree instanceof VantageTree.Leaf){
           currentIterator = tree.iterator();
-        } else {
+        } else if(tree instanceof VantageTree.Split){
           VantageTree.Split s = (VantageTree.Split)tree;
+          currentIterator = new RepeatingIterator(s.center, s.count);
           stack[stackDepth++] = s.in;
           stack[stackDepth++] = s.out;
         }
