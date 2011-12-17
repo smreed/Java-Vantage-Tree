@@ -8,4 +8,4 @@ clean:
 	rm -f fas
 
 %.class: %.java
-	javac -Xlint:unchecked $(C_FLAGS) $<
+	javac $(C_FLAGS) $<

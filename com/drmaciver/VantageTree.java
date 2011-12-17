@@ -126,6 +126,10 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
     abstract int depth();
     abstract public Tree allWithinEpsilon(V v, double e);
 
+    abstract Collection<V> ownElements();
+    Collection<Tree> subtreesHitting(V v, double e){ return subtrees(); }
+    abstract Collection<Tree> subtrees();
+
   	abstract void addToQueue(V v, SmallestElements<V> q);
     public List<V> nearestN(V v, int n){
       SmallestElements<V> q = new SmallestElements<V>(n);
@@ -143,6 +147,9 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   		this.items = items;
   		leavesBuilt++;
   	}
+
+    Collection<V> ownElements(){ return items; }
+    Collection<Tree> subtrees(){ return Collections.emptyList(); }
 
   	public int size(){ return items.size(); }
   	public Iterator<V> iterator(){ return items.iterator(); }	
@@ -196,6 +203,18 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
       this(center, threshold, bound,count, buildTree(in), buildTree(out));
   	}
 
+    Collection<V> ownElements(){ return new Repeating(center, count); }
+    Collection<Tree> subtrees(){ return Arrays.asList(in, out); }
+    Collection<Tree> subtreesHitting(V v, double e){
+  		double r = metric.distance(v, center);
+
+  		if(metric.bound(r, this.radius) < e) return Arrays.asList(in, out);
+  		if(metric.bound(e, this.radius) < r) return Collections.emptyList();
+  		if(metric.bound(e, this.threshold) < r) return Arrays.asList(out);
+  		if(metric.bound(e, this.threshold) < r) return Arrays.asList(in);
+  		return Arrays.asList(in, out);
+    }
+
   	public int size(){ return size; }
 
   	public Iterator<V> iterator(){ return new TreeIterator(this); }
@@ -242,6 +261,9 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
     public Iterator<V> iterator(){ return Collections.<V>emptyList().iterator(); }
   	void addToQueue(V v, SmallestElements<V> q){}
   	public Tree allWithinEpsilon(V v, double e){ return this; }
+
+    Collection<V> ownElements(){ return Collections.emptyList(); }
+    Collection<Tree> subtrees(){ return Collections.emptyList(); }
   }
 
   class TreeIterator implements Iterator<V>{
@@ -258,14 +280,8 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
     void advance(){
       while((currentIterator == null || !currentIterator.hasNext()) && stackDepth > 0){
         VantageTree.Tree tree = stack[--stackDepth];
-        if(tree instanceof VantageTree.Leaf){
-          currentIterator = tree.iterator();
-        } else if(tree instanceof VantageTree.Split){
-          VantageTree.Split s = (VantageTree.Split)tree;
-          currentIterator = new RepeatingIterator(s.center, s.count);
-          stack[stackDepth++] = s.in;
-          stack[stackDepth++] = s.out;
-        }
+        currentIterator = tree.ownElements().iterator();
+        for(VantageTree.Tree s : (Collection<VantageTree.Tree>)tree.subtrees()) stack[stackDepth++] = s;
       }
     }
 
