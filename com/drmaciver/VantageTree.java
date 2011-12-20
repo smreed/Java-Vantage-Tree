@@ -132,12 +132,31 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
 
     public List<V> nearestN(final V v, int n){
       final SmallestElements<V> q = new SmallestElements<V>(n);
+      final PriorityQueue<ValueWithDistance<Split>> treesToSearch = new PriorityQueue<ValueWithDistance<Split>>();
 
-      Iterator<V> searchIterator = new TreeIterator(this){
+      AbstractTreeIterator searchIterator = new AbstractTreeIterator(){
         @Override Collection<VantageTree.Tree> subtreesFrom(VantageTree.Tree tree){
           return tree.subtreesHitting(v, q.bound());
         }
+
+        void pushTrees(Collection<VantageTree.Tree> trees){
+          for(VantageTree.Tree tree : trees){
+            if(tree instanceof VantageTree.Split){
+              Split split = (Split)tree;
+              treesToSearch.add(new ValueWithDistance(tree, metric.unbound(metric.distance(v, split.center), split.radius)));
+            } else consumeTree(tree);
+          }
+        }
+
+        VantageTree.Tree popTree(){
+          ValueWithDistance<Split> vs = treesToSearch.poll();
+          if(vs == null) return null;
+          if(vs.distance > q.bound()) return null;
+          return vs.value;
+        }
       };
+
+      searchIterator.pushTrees(Arrays.asList((VantageTree.Tree)this));
 
       while(searchIterator.hasNext()){
         V w = (V)searchIterator.next();
@@ -267,13 +286,17 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
       return (Collection<VantageTree.Tree>)tree.subtrees();
     }
 
+    void consumeTree(VantageTree.Tree tree){
+      if(tree instanceof VantageTree.Leaf) leavesHit++;
+      currentIterator = tree.ownElements().iterator();
+      pushTrees(subtreesFrom(tree));
+    }
+
     void advance(){
       while(currentIterator == null || !currentIterator.hasNext()){
         VantageTree.Tree tree = popTree();
         if(tree == null) break;
-        if(tree instanceof VantageTree.Leaf) leavesHit++;
-        currentIterator = tree.ownElements().iterator();
-        pushTrees(subtreesFrom(tree));
+        consumeTree(tree);
       }
     }
 

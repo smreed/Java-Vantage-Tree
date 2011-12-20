@@ -31,5 +31,18 @@ public abstract class Metric<V>{
 
 
   public abstract double distance(V x, V y);
+
+   // Contract: 
+   //  bound(d1, d2) = bound(d2, d1)
+   //  x <= y implies bound(x, d) <= bound(y, d)
+   //  bound(d1, d2) >= bound(d1)
+   //  distance(x, z) <= bound(distance(x, y), distance(y, z))
   public double bound(double d1, double d2){ return d1 + d2; }
+
+  // Contract:
+  //  bound(d2, unbound(d1, d2)) >= d2
+  public double unbound(double d1, double d2){
+    if(d1 <= d2) return 0.0;
+    else return d2 - d1;
+  }
 }
