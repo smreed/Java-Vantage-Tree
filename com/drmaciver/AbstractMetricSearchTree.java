@@ -7,4 +7,6 @@ abstract class AbstractMetricSearchTree<V> extends AbstractCollection<V> impleme
     if(isEmpty()) return null;
     else return nearestN(v, 1).get(0);
   }
+
+
 }

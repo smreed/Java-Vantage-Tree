@@ -8,30 +8,20 @@ import java.util.Collections;
 import java.util.AbstractCollection;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.Arrays;
 import com.drmaciver.Repeating.RepeatingIterator;
 
 public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   public static final int MAXIMUM_LEAF_SIZE = 200;
 
-  public boolean debugStatistics(){ return false; }
-
   final Metric<V> metric;
-  final Random random;
   final Tree tree;
-  int leavesBuilt = 0;
-  int leafCount = 0;
-  int leavesHit = 0;
-  int treeBuilt = 0;
   final int totalSize;
 
   public VantageTree(Metric<V> metric, List<V> items){
   	this.metric = metric;
-  	this.random = new Random();
     this.totalSize = items.size();
   	this.tree 	= buildTree(items); 
-    this.leafCount = leavesBuilt;
   }
 
   public Iterator<V> iterator(){ return tree.iterator(); }
@@ -48,16 +38,11 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   }
 
   public MetricSearchTree<V> allWithinEpsilon(V v, double e){
-  	leavesHit = 0;
-  	Tree result = this.tree.allWithinEpsilon(v, e);
-  	if(debugStatistics()) System.err.println("allWithinEpsilon hit " + leavesHit  + " leaves out of " + leafCount);
-  	return result;
+  	return this.tree.allWithinEpsilon(v, e);
   }
 
   public List<V> nearestN(V v, int n){
-    leavesHit = 0;
     List<V> result = this.tree.nearestN(v, n);
-    if(debugStatistics()) System.err.println("nearestN hit " + leavesHit  + " leaves out of " + leafCount);
     return result;
   }
 
@@ -77,14 +62,8 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
     }).pickBestCandidate(items);
   }
 
-  void debugBuilding(){
-    if(debugStatistics() && (random.nextInt(1 + totalSize / 100) == 0)) System.err.println("Tree building " + (treeBuilt * 100.0 / totalSize) + "% complete");
-  }
-
   Tree buildTree(List<V> items){
   	if(items.size() <= MAXIMUM_LEAF_SIZE) {
-      treeBuilt += items.size();
-      debugBuilding();
       return new Leaf(items);
     }
   	else {
@@ -98,8 +77,6 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
 
       if(max <= 0.0 || median >= max){
         // TODO: Optimise this case more sensibly. 
-        treeBuilt += items.size();
-        debugBuilding();
         return new Leaf(items);
       }
 
@@ -117,7 +94,6 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   		assert(in.size() + out.size() == items.size());
 
   		Tree result = new Split(pivot, median, max, c, in, out);
-      debugBuilding(); 
       return result;
   	}
   }
@@ -174,7 +150,6 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
 
   	Leaf(List<V> items){
   		this.items = items;
-  		leavesBuilt++;
   	}
 
     Collection<V> ownElements(){ return items; }
@@ -184,7 +159,6 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   	public Iterator<V> iterator(){ return items.iterator(); }	
 
   	public Tree allWithinEpsilon(V v, double e){
-  		leavesHit++;
   		List<V> result = new ArrayList<V>();
 
   		for(V w: this.items){
@@ -287,7 +261,6 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
     }
 
     void consumeTree(VantageTree.Tree tree){
-      if(tree instanceof VantageTree.Leaf) leavesHit++;
       currentIterator = tree.ownElements().iterator();
       pushTrees(subtreesFrom(tree));
     }
