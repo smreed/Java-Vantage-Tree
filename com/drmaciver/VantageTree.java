@@ -257,33 +257,23 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
     Collection<Tree> subtrees(){ return Collections.emptyList(); }
   }
 
-  class TreeIterator implements Iterator<V>{
+  abstract class AbstractTreeIterator implements Iterator<V>{
     Iterator currentIterator;
-    VantageTree.Tree[] stack;
-    int stackDepth;
 
-    TreeIterator(Tree tree){
-      stackDepth = 1;
-      stack = new VantageTree.Tree[1 + tree.depth() * 2];
-      stack[0] = (VantageTree.Tree)tree;
-    }
+    abstract VantageTree.Tree popTree();
+    abstract void pushTrees(Collection<VantageTree.Tree> tree);
 
     Collection<VantageTree.Tree> subtreesFrom(VantageTree.Tree tree){
       return (Collection<VantageTree.Tree>)tree.subtrees();
     }
 
     void advance(){
-      while((currentIterator == null || !currentIterator.hasNext()) && stackDepth > 0){
-        VantageTree.Tree tree = stack[--stackDepth];
+      while(currentIterator == null || !currentIterator.hasNext()){
+        VantageTree.Tree tree = popTree();
+        if(tree == null) break;
         if(tree instanceof VantageTree.Leaf) leavesHit++;
         currentIterator = tree.ownElements().iterator();
-        Collection<VantageTree.Tree> treesToAdd = subtreesFrom(tree);
-        if(stackDepth + treesToAdd.size() > stack.length){
-          VantageTree.Tree[] newStack = new VantageTree.Tree[stack.length * 2];
-          System.arraycopy(stack, 0, newStack, 0, stackDepth);
-          stack = newStack;
-        }
-        for(VantageTree.Tree s : subtreesFrom(tree)) stack[stackDepth++] = s;
+        pushTrees(subtreesFrom(tree));
       }
     }
 
@@ -299,5 +289,29 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
     } 
 
   	public void remove(){ throw new UnsupportedOperationException(); }
+  }
+
+  class TreeIterator extends AbstractTreeIterator{
+    VantageTree.Tree[] stack;
+    int stackDepth;
+
+    TreeIterator(Tree tree){
+      stackDepth = 1;
+      stack = new VantageTree.Tree[1 + tree.depth() * 2];
+      stack[0] = (VantageTree.Tree)tree;
+    }
+
+    VantageTree.Tree popTree(){
+      return stackDepth <= 0 ? null : stack[--stackDepth];
+    }
+
+    void pushTrees(Collection<VantageTree.Tree> treesToAdd){
+      if(stackDepth + treesToAdd.size() > stack.length){
+        VantageTree.Tree[] newStack = new VantageTree.Tree[stack.length * 2];
+        System.arraycopy(stack, 0, newStack, 0, stackDepth);
+        stack = newStack;
+      }
+      for(VantageTree.Tree s : treesToAdd) stack[stackDepth++] = s;
+    }
   }
 }
