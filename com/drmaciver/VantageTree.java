@@ -130,10 +130,20 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
     Collection<Tree> subtreesHitting(V v, double e){ return subtrees(); }
     abstract Collection<Tree> subtrees();
 
-  	abstract void addToQueue(V v, SmallestElements<V> q);
-    public List<V> nearestN(V v, int n){
-      SmallestElements<V> q = new SmallestElements<V>(n);
-      addToQueue(v, q);
+    public List<V> nearestN(final V v, int n){
+      final SmallestElements<V> q = new SmallestElements<V>(n);
+
+      Iterator<V> searchIterator = new TreeIterator(this){
+        @Override Collection<VantageTree.Tree> subtreesFrom(VantageTree.Tree tree){
+          return tree.subtreesHitting(v, q.bound());
+        }
+      };
+
+      while(searchIterator.hasNext()){
+        V w = (V)searchIterator.next();
+        q.add(w, metric.distance(v, w));
+      }
+
       return q.toList();
     }
   }
@@ -162,14 +172,6 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   			if(metric.distance(v, w) < e) result.add(w);
   		}
   		return new Leaf(result);
-  	}
-
-  	void addToQueue(V v, SmallestElements<V> q){
-  		leavesHit++;
-
-  		for(V w: this.items){
-  			q.add(w, metric.distance(v, w));
-  		}
   	}
   }
 
@@ -243,23 +245,12 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
 
   		return new Split(center, threshold, radius, (centerHits ? count : 0), newIn, newOut);
   	}
-
-  	void addToQueue(V v, SmallestElements<V> q){
-  		double r = metric.distance(v, center);
-
-      for(int i = 0; i < count; i++) q.add(center, r);
-  		if(metric.bound(q.bound(), this.radius) < r) return;
-  		if(metric.bound(q.bound(), this.threshold) < r){ out.addToQueue(v, q); }
-  		else if(metric.bound(q.bound(), r) < this.threshold){ in.addToQueue(v, q); }
-  		else { in.addToQueue(v, q); out.addToQueue(v, q); };
-  	}
   }
 
   class Empty extends Tree{
     int depth(){ return 0; }
     public int size(){ return 0; }
     public Iterator<V> iterator(){ return Collections.<V>emptyList().iterator(); }
-  	void addToQueue(V v, SmallestElements<V> q){}
   	public Tree allWithinEpsilon(V v, double e){ return this; }
 
     Collection<V> ownElements(){ return Collections.emptyList(); }
@@ -268,20 +259,31 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
 
   class TreeIterator implements Iterator<V>{
     Iterator currentIterator;
-    final VantageTree.Tree[] stack;
+    VantageTree.Tree[] stack;
     int stackDepth;
 
     TreeIterator(Tree tree){
       stackDepth = 1;
-      stack = new VantageTree.Tree[tree.depth() * 2];
+      stack = new VantageTree.Tree[1 + tree.depth() * 2];
       stack[0] = (VantageTree.Tree)tree;
+    }
+
+    Collection<VantageTree.Tree> subtreesFrom(VantageTree.Tree tree){
+      return (Collection<VantageTree.Tree>)tree.subtrees();
     }
 
     void advance(){
       while((currentIterator == null || !currentIterator.hasNext()) && stackDepth > 0){
         VantageTree.Tree tree = stack[--stackDepth];
+        if(tree instanceof VantageTree.Leaf) leavesHit++;
         currentIterator = tree.ownElements().iterator();
-        for(VantageTree.Tree s : (Collection<VantageTree.Tree>)tree.subtrees()) stack[stackDepth++] = s;
+        Collection<VantageTree.Tree> treesToAdd = subtreesFrom(tree);
+        if(stackDepth + treesToAdd.size() > stack.length){
+          VantageTree.Tree[] newStack = new VantageTree.Tree[stack.length * 2];
+          System.arraycopy(stack, 0, newStack, 0, stackDepth);
+          stack = newStack;
+        }
+        for(VantageTree.Tree s : subtreesFrom(tree)) stack[stackDepth++] = s;
       }
     }
 
@@ -298,5 +300,4 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
 
   	public void remove(){ throw new UnsupportedOperationException(); }
   }
-
 }
