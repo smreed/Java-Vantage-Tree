@@ -1,5 +1,6 @@
 package com.drmaciver;
 import java.util.List;
+import java.util.Iterator;
 import java.util.Collection;
 import java.util.Random;
 import java.util.ArrayList;
@@ -15,24 +16,25 @@ class Driver{
   	}
 
     long buildStart = System.currentTimeMillis();
-  	VantageTree<double[]> db = new VantageTree<double[]>(Metric.L2_DISTANCE, points){ public boolean debugStatistics(){ return true; } };
+  	AbstractMetricSearchTree<double[]> db = VantageTree.build(Metric.L2_DISTANCE, points);
     System.out.println("Building tree took " + (System.currentTimeMillis() - buildStart) + "ms");
 
     {
-      int numQueries = 1000;
+      int numQueries = 10000;
       long queryStart = System.currentTimeMillis();
       for(int i = 0; i < numQueries; i++){
         double[] p = rv(rnd);
         double e = rnd.nextDouble();
 
-        Collection<double[]> we = db.allWithinEpsilon(p, e);
+        Iterator<double[]> we = db.allWithinEpsilon(p, e);
+        while(we.hasNext()) we.next();
       }
       long queriesTook = System.currentTimeMillis() - queryStart;
       System.out.println("Within epsilon queries took about " + (queriesTook / ((double)numQueries)) + "ms each");
     }
 
     {
-      int numQueries = 1000;
+      int numQueries = 10000;
       long queryStart = System.currentTimeMillis();
       for(int i = 0; i < numQueries; i++){
         double[] p = rv(rnd);

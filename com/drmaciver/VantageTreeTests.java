@@ -1,6 +1,7 @@
 package com.drmaciver;
 
 import java.util.Set;
+import java.util.Iterator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ArrayList;
@@ -25,18 +26,22 @@ class VantageTreeTests{
     final String name;
     final Metric<V> metric;
     final List<V> points;
-    final VantageTree<V> tree;
+    final AbstractMetricSearchTree<V> tree;
     final List<String> errors = new ArrayList<String>();
 
     TestCase(String name, Metric<V> metric, List<V> points){
       this.name = name;
       this.metric = metric;
       this.points = points;
-      this.tree = new VantageTree<V>(metric, points);
+      this.tree = VantageTree.build(metric, points);
       testCases.add(this);
+      System.err.println("Checking tree size");
       check(points.size() == tree.size(), "Expected tree to have " + points.size() + " points but it has " + tree.size());
-      check(points.size() == tree.toList().size(), "Expected tree.toList() to have " + points.size() + " points but it has " + tree.toList().size());
+      List<V> treeList = new ArrayList<V>(tree);
+      System.err.println("Checking tree.toList size");
+      check(points.size() == treeList.size(), "Expected tree.toList() to have " + points.size() + " points but it has " + treeList.size());
 
+      System.err.println("Sampling nearest");
       for(int i = 1; i < 5; i++){
         for(int j = 0; j < 50; j++){
           sampleNearest(i);
@@ -44,10 +49,12 @@ class VantageTreeTests{
         }
       }
 
+      System.err.println("testingEpsilon");
       for(int i = 1; i < 1000; i++){
         testEpsilon(this.points.get(random.nextInt(points.size())), random.nextDouble());
       }
 
+      System.err.println("testing contains");
       for(V v : points) check(tree.contains(v), "Expected tree to contain " + v);
     }
 
@@ -71,7 +78,10 @@ class VantageTreeTests{
     }
 
     void testEpsilon(V v, double e){
-      Set<V> nearest = new HashSet<V>(tree.allWithinEpsilon(v, e));
+      System.err.println("Testing");
+      Set<V> nearest = new HashSet<V>();
+      Iterator<V> awe = tree.allWithinEpsilon(v, e);
+      while(awe.hasNext()){ System.err.println("Hect"); nearest.add(awe.next()); }
 
       for(V pt : points){
         if(nearest.contains(pt)) check(metric.distance(v, pt) < e, "Expected distance(" + v + ", " + pt + ") to be < " + e);
