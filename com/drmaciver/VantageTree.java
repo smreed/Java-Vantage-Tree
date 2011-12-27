@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import com.drmaciver.Repeating.RepeatingIterator;
 
-public class VantageTree<V> extends AbstractMetricSearchTree<V>{
+public class VantageTree<V> extends AbstractMetricSearch<V>{
   public static final int MAXIMUM_LEAF_SIZE = 200;
 
   final Metric<V> metric;
@@ -37,7 +37,7 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
     return false;
   }
 
-  public MetricSearchTree<V> allWithinEpsilon(V v, double e){
+  public Collection<V> allWithinEpsilon(V v, double e){
   	return this.tree.allWithinEpsilon(v, e);
   }
 
@@ -98,7 +98,7 @@ public class VantageTree<V> extends AbstractMetricSearchTree<V>{
   	}
   }
 
-  private abstract class Tree extends AbstractMetricSearchTree<V>{
+  private abstract class Tree extends AbstractMetricSearch<V>{
     abstract int depth();
     abstract public Tree allWithinEpsilon(V v, double e);
 
